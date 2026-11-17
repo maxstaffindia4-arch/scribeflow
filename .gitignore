@@ -1,0 +1,12 @@
+node_modules/
+release/
+public-ui/
+tmp/
+model-cache/
+test-*
+result*.json
+r*.json
+*.log
+burned.mp4
+dl-test.wav
+.DS_Store

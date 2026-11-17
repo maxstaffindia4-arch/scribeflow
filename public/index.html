@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScribeFlow</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d12;
+    --card: rgba(255,255,255,0.04);
+    --card-border: rgba(255,255,255,0.08);
+    --text: #eef1f7;
+    --muted: #8b93a7;
+    --accent: #7c6cff;
+    --accent-2: #4dd6c1;
+    --danger: #ff7a7a;
+    --warn: #ffcf7a;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1000px 500px at 15% -10%, rgba(124,108,255,0.18), transparent 60%),
+      radial-gradient(800px 500px at 90% 110%, rgba(77,214,193,0.12), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex; justify-content: center;
+    padding: 48px 20px 80px;
+  }
+  main { width: 100%; max-width: 900px; }
+
+  header { margin-bottom: 28px; display: flex; align-items: center; gap: 14px; }
+  header img { width: 44px; height: 44px; border-radius: 12px; }
+  .help-btn {
+    margin-left: auto; width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    color: var(--muted); font-size: 16px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; flex: none;
+  }
+  .help-btn:hover { color: var(--text); border-color: var(--accent); background: rgba(124,108,255,0.12); }
+  h1 {
+    font-size: 28px; font-weight: 700; margin: 0 0 2px; letter-spacing: -0.02em;
+    background: linear-gradient(90deg, #a99fff, #4dd6c1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { color: var(--muted); font-size: 14px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 18px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  }
+
+  .drop {
+    border: 2px dashed rgba(124,108,255,0.45);
+    border-radius: 14px;
+    padding: 40px 20px;
+    text-align: center; cursor: pointer;
+    transition: all .2s ease;
+    background: rgba(124,108,255,0.04);
+  }
+  .drop:hover { border-color: var(--accent); background: rgba(124,108,255,0.09); transform: translateY(-1px); }
+  .drop.over {
+    border-color: var(--accent-2);
+    background: rgba(77,214,193,0.08);
+    box-shadow: 0 0 0 4px rgba(77,214,193,0.12);
+  }
+  .drop .icon { font-size: 34px; margin-bottom: 10px; filter: grayscale(1) opacity(.7); }
+  .drop .big { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .drop .small { color: var(--muted); font-size: 13px; }
+
+  .queue-list { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .queue-item {
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+    padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .queue-item .name { flex: 1; word-break: break-all; }
+  .queue-item .st { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .queue-item.done .st { color: var(--accent-2); }
+  .queue-item.error .st { color: var(--danger); }
+  .queue-item.active .st { color: #b7adff; }
+
+  .recent { margin-top: 12px; font-size: 12px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .recent .chip {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 99px; padding: 3px 10px; font-size: 11px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 7px; }
+  label .note { text-transform: none; letter-spacing: 0; font-weight: 400; }
+  select, input[type=number], input[type=text] {
+    width: 100%;
+    background: rgba(0,0,0,0.3);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  select:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,108,255,0.18);
+  }
+  select:disabled { opacity: .45; }
+  input[type=number] { font-variant-numeric: tabular-nums; }
+
+  details.advanced {
+    margin-top: 16px; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 12px 16px; background: rgba(0,0,0,0.15);
+  }
+  details.advanced summary {
+    cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
+    list-style: none; display: flex; align-items: center; gap: 8px;
+  }
+  details.advanced summary::before { content: "▸"; transition: transform .15s; }
+  details.advanced[open] summary::before { transform: rotate(90deg); }
+  .adv-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+    gap: 12px; margin-top: 14px;
+  }
+  .adv-grid label { font-size: 10px; }
+
+  .actions-row { display: flex; align-items: center; gap: 14px; margin-top: 22px; flex-wrap: wrap; }
+  button {
+    border: 0; border-radius: 12px; padding: 12px 26px;
+    font-size: 14px; font-weight: 700; letter-spacing: .01em; cursor: pointer;
+    transition: transform .12s, box-shadow .15s, opacity .15s;
+  }
+  button:hover:not(:disabled) { transform: translateY(-1px); }
+  button:active:not(:disabled) { transform: translateY(0); }
+  #go {
+    background: linear-gradient(135deg, var(--accent), #5a8bff);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(124,108,255,0.35);
+  }
+  #go:hover:not(:disabled) { box-shadow: 0 8px 26px rgba(124,108,255,0.5); }
+  button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+  button.secondary {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text);
+    padding: 8px 16px; font-size: 13px;
+  }
+  button.secondary:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+  button.ghost {
+    background: transparent; border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted); padding: 8px 14px; font-size: 13px; font-weight: 600;
+  }
+  button.ghost:hover:not(:disabled) { color: var(--text); border-color: rgba(255,255,255,0.25); }
+
+  .progress-wrap { margin-top: 20px; display: none; }
+  .bar {
+    height: 10px; border-radius: 99px; overflow: hidden;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .bar > div {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 99px;
+    transition: width .35s ease;
+  }
+  .indeterminate .bar > div { width: 35%; animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+  .status {
+    font-size: 12.5px; color: var(--muted); margin-top: 10px;
+    min-height: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  .status::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-2); flex: none;
+  }
+  .status.error { color: var(--danger); }
+  .status.error::before { background: var(--danger); }
+
+  .hint { font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.6; }
+  .hint b { color: #b9c0d4; font-weight: 600; }
+  .hint code { background: rgba(255,255,255,0.07); padding: 1px 6px; border-radius: 5px; font-size: 11px; }
+
+  /* Watch folder */
+  .watch-row { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+  .watch-row input[type=text] { flex: 1; min-width: 220px; }
+  .watch-dot { width: 8px; height: 8px; border-radius: 50%; background: #3a4152; flex: none; }
+  .watch-dot.on { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+  .watch-files { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .watch-files .wf {
+    display: inline-block; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+    padding: 4px 10px; margin: 3px 4px 3px 0;
+  }
+
+  /* Results */
+  .result-card { margin-bottom: 22px; }
+  .result-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .result-head .title { font-size: 15px; font-weight: 700; word-break: break-all; }
+  .badge {
+    font-size: 11px; padding: 4px 10px; border-radius: 99px; margin-left: 8px;
+    background: rgba(124,108,255,0.15); border: 1px solid rgba(124,108,255,0.35);
+    color: #b7adff; font-weight: 600;
+  }
+  .badge.warn { background: rgba(255,207,122,0.12); border-color: rgba(255,207,122,0.35); color: var(--warn); }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+  .preview { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 16px; }
+  @media (min-width: 760px) { .preview { grid-template-columns: 1.2fr 1fr; } }
+  .media-box {
+    background: #000; border-radius: 12px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center; min-height: 120px;
+  }
+  .media-box video, .media-box audio { width: 100%; display: block; }
+  .media-box audio { padding: 18px; }
+  .cue-pane { display: flex; flex-direction: column; min-height: 0; }
+  .search-box { margin-bottom: 8px; }
+  .cue-list {
+    flex: 1; max-height: 300px; overflow-y: auto; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.25);
+    font-size: 12.5px;
+  }
+  .cue-list::-webkit-scrollbar { width: 8px; }
+  .cue-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+  .cue {
+    padding: 8px 12px; cursor: pointer; border-left: 3px solid transparent;
+    transition: background .12s;
+  }
+  .cue:hover { background: rgba(255,255,255,0.05); }
+  .cue.active { background: rgba(124,108,255,0.14); border-left-color: var(--accent); }
+  .cue.dim { opacity: .35; }
+  .cue .t { color: var(--muted); font-size: 10.5px; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+  .cue.active .t { color: #b7adff; }
+  mark { background: rgba(255,207,122,0.35); color: inherit; border-radius: 2px; padding: 0 1px; }
+
+  textarea {
+    width: 100%; height: 280px; margin-top: 14px; resize: vertical;
+    background: rgba(0,0,0,0.35);
+    color: #d5dbe8;
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12.5px; line-height: 1.6;
+    outline: none;
+  }
+  textarea:focus { border-color: rgba(124,108,255,0.5); }
+  textarea.warn-border { border-color: rgba(255,207,122,0.5); }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--muted); margin: 18px 0 4px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* Guided tour */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(5,6,10,0.72);
+  }
+  .tour-spot {
+    position: absolute; border-radius: 14px;
+    box-shadow: 0 0 0 9999px rgba(5,6,10,0.72), 0 0 0 3px var(--accent), 0 0 24px rgba(124,108,255,0.5);
+    transition: all .3s ease;
+    pointer-events: none;
+  }
+  .tour-card {
+    position: absolute; width: 320px;
+    background: #171a24; border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 16px; padding: 18px 20px;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.65);
+    transition: all .3s ease;
+  }
+  .tour-step {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; color: #b7adff; margin-bottom: 6px;
+  }
+  .tour-card h3 { margin: 0 0 6px; font-size: 16px; }
+  .tour-card p { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 14px; }
+  .tour-card p b { color: var(--text); }
+  .tour-row { display: flex; gap: 8px; align-items: center; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="/favicon.png" alt="ScribeFlow">
+    <div>
+      <h1>ScribeFlow</h1>
+      <div class="sub">Local Whisper transcription &rarr; word-timed subtitles. Free, private, offline after model download.</div>
+    </div>
+    <button class="help-btn" id="helpBtn" title="Help &amp; guide">?</button>
+  </header>
+
+  <div class="card">
+    <div class="drop" id="drop">
+      <div class="icon">&#127925;</div>
+      <div class="big">Drop audio or video here</div>
+      <div class="small">Multiple files OK &mdash; or click to browse &middot; right-click a file in Explorer &rarr; &quot;ScribeFlow&quot;</div>
+      <input type="file" id="file" class="hidden" multiple accept="audio/*,video/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.mp4,.mkv,.mov,.webm,.avi,.m4v">
+    </div>
+    <div class="queue-list" id="queueList"></div>
+    <div class="recent hidden" id="recentWrap">Recent: <span id="recent"></span></div>
+
+    <div class="grid">
+      <div>
+        <label for="model">Model</label>
+        <select id="model">
+          <option value="base">Base — balanced (recommended)</option>
+          <option value="tiny">Tiny — fastest, least accurate</option>
+          <option value="small">Small — slower, more accurate</option>
+          <option value="large-v3-turbo">Large v3 Turbo — best, very slow on CPU</option>
+          <option value="tiny.en">Tiny.en — English only</option>
+          <option value="base.en">Base.en — English only</option>
+          <option value="small.en">Small.en — English only</option>
+        </select>
+      </div>
+      <div>
+        <label for="language">Language</label>
+        <select id="language">
+          <option value="auto">Auto-detect</option>
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+          <option value="pt">Portuguese</option>
+          <option value="nl">Dutch</option>
+          <option value="pl">Polish</option>
+          <option value="ja">Japanese</option>
+          <option value="ko">Korean</option>
+          <option value="zh">Chinese</option>
+        </select>
+      </div>
+      <div>
+        <label for="translateTo">Translate to <span class="note">(optional)</span></label>
+        <select id="translateTo">
+          <option value="none">None</option>
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="it">Italian</option>
+          <option value="nl">Dutch</option>
+          <option value="ru">Russian</option>
+          <option value="zh">Chinese</option>
+          <option value="ar">Arabic</option>
+          <option value="cs">Czech</option>
+        </select>
+      </div>
+      <div>
+        <label for="device">Device</label>
+        <select id="device">
+          <option value="auto">Auto (GPU if available)</option>
+          <option value="dml">DirectML GPU</option>
+          <option value="cpu">CPU only</option>
+        </select>
+      </div>
+      <div>
+        <label for="dtype">Precision</label>
+        <select id="dtype">
+          <option value="auto">Auto (quantized)</option>
+          <option value="q8">Q8 — faster</option>
+          <option value="fp32">FP32 — best quality</option>
+        </select>
+      </div>
+      <div>
+        <label for="maxChars">Max chars / line</label>
+        <input type="number" id="maxChars" value="42" min="20" max="80" step="1">
+      </div>
+      <div>
+        <label for="maxWords">Max words / line <span class="note">(0 = off)</span></label>
+        <input type="number" id="maxWords" value="0" min="0" max="20" step="1">
+      </div>
+      <div>
+        <label for="maxLines">Lines per cue</label>
+        <input type="number" id="maxLines" value="2" min="1" max="4" step="1">
+      </div>
+      <div>
+        <label for="pauseSec">Split on pauses &gt; <span class="note">(sec)</span></label>
+        <input type="number" id="pauseSec" value="0.7" min="0.1" max="5" step="0.1">
+      </div>
+    </div>
+
+    <details class="advanced">
+      <summary>ASS subtitle styling (burn-in / .ass export)</summary>
+      <div class="adv-grid">
+        <div>
+          <label for="assFont">Font</label>
+          <input type="text" id="assFont" value="Arial">
+        </div>
+        <div>
+          <label for="assSize">Size</label>
+          <input type="number" id="assSize" value="16" min="6" max="60" step="1">
+        </div>
+        <div>
+          <label for="assColor">Color</label>
+          <select id="assColor">
+            <option value="white">White</option>
+            <option value="yellow">Yellow</option>
+            <option value="cyan">Cyan</option>
+            <option value="green">Green</option>
+          </select>
+        </div>
+        <div>
+          <label for="assPos">Position</label>
+          <select id="assPos">
+            <option value="2">Bottom</option>
+            <option value="5">Middle</option>
+            <option value="8">Top</option>
+          </select>
+        </div>
+        <div>
+          <label for="assBold">Bold</label>
+          <select id="assBold">
+            <option value="0">Off</option>
+            <option value="1">On</option>
+          </select>
+        </div>
+      </div>
+    </details>
+
+    <div class="actions-row">
+      <button id="go" disabled>Generate Subtitles</button>
+      <button class="ghost hidden" id="clearQueue">Clear</button>
+      <button class="ghost" id="clearCache" title="Delete downloaded models">Clear model cache</button>
+      <span class="status" id="idleHint" style="margin-top:0">Pick files to begin</span>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="bar"><div id="barFill"></div></div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="watch-row">
+      <span class="watch-dot" id="watchDot"></span>
+      <input type="text" id="watchDir" placeholder="Watch folder — e.g. D:\Videos\new" spellcheck="false">
+      <button class="secondary" id="watchBtn">Start watching</button>
+      <span class="status" id="watchStatus" style="margin:0"></span>
+    </div>
+    <div class="watch-files" id="watchFiles"></div>
+
+    <div class="hint">
+      <b>Layout:</b> chars/line and words/line both apply — whichever fills first wraps the line. Lines per cue = 1–4. Pauses split cues.
+      <b>Translate</b> runs a local opus-mt model (English pivot) — first use downloads ~80–300&nbsp;MB per language pair.
+      <b>Device:</b> DirectML uses your GPU when available; CPU is the fallback.
+      Models download once into the cache; <b>Clear model cache</b> frees disk space.
+    </div>
+  </div>
+
+  <div id="results"></div>
+</main>
+
+<!-- Interactive guided tour -->
+<div class="tour-overlay hidden" id="tourOverlay">
+  <div class="tour-spot hidden" id="tourSpot"></div>
+  <div class="tour-card" id="tourCard">
+    <div class="tour-step" id="tourStep"></div>
+    <h3 id="tourTitle"></h3>
+    <p id="tourText"></p>
+    <div class="tour-row">
+      <button class="ghost" id="tourSkip">Skip tour</button>
+      <div style="flex:1"></div>
+      <button class="ghost hidden" id="tourBack">Back</button>
+      <button id="tourNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
