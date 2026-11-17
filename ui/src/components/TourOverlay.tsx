@@ -37,18 +37,18 @@ export function TourOverlay({ open, step, onClose, onStep }: TourOverlayProps) {
       return;
     }
     const el = document.querySelector(`[data-tour="${current.id}"]`) as HTMLElement | null;
-    // Scroll the target into view once per step — NOT on every scroll event,
-    // otherwise smooth-scroll keeps retriggering itself and stutters.
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Instant scroll — smooth scrolling made the spotlight/tooltip lag behind
+    // and caused the top-left flash before the first measurement landed.
+    el?.scrollIntoView({ behavior: 'auto', block: 'center' });
 
     let raf = 0;
     function measure() {
       const target = document.querySelector(`[data-tour="${current.id}"]`) as HTMLElement | null;
       setRect(target ? target.getBoundingClientRect() : null);
     }
-    // Measure after the smooth scroll settles, then keep rect fresh on resize/scroll.
-    const t1 = window.setTimeout(measure, 350);
-    const t2 = window.setTimeout(measure, 700);
+    measure(); // synchronous — position is already correct after instant scroll
+    raf = requestAnimationFrame(measure);
+    const t = window.setTimeout(measure, 150);
     const onMove = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(measure);
@@ -56,8 +56,7 @@ export function TourOverlay({ open, step, onClose, onStep }: TourOverlayProps) {
     window.addEventListener('resize', onMove);
     window.addEventListener('scroll', onMove, true);
     return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      window.clearTimeout(t);
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onMove);
       window.removeEventListener('scroll', onMove, true);
@@ -71,13 +70,15 @@ export function TourOverlay({ open, step, onClose, onStep }: TourOverlayProps) {
 
   const pad = 12;
   const tooltipW = 320;
-  let left = rect ? rect.left + rect.width / 2 - tooltipW / 2 : 0;
-  let top = rect ? rect.bottom + pad : 0;
+  // When there's no spotlight target (rect null), center the tooltip
+  // instead of pinning it to the top-left corner.
+  let left = rect ? rect.left + rect.width / 2 - tooltipW / 2 : (window.innerWidth - tooltipW) / 2;
+  let top = rect ? rect.bottom + pad : window.innerHeight * 0.35;
 
   if (typeof window !== 'undefined') {
     left = Math.max(12, Math.min(left, window.innerWidth - tooltipW - 12));
-    if (top + 220 > window.innerHeight) {
-      top = rect ? rect.top - 220 - pad : 0;
+    if (rect && top + 220 > window.innerHeight) {
+      top = rect.top - 220 - pad;
     }
   }
 
