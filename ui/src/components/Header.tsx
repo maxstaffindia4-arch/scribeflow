@@ -1,4 +1,4 @@
-import { HelpCircle, AudioLines } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 interface HeaderProps {
   onHelp: () => void;
@@ -9,9 +9,8 @@ export function Header({ onHelp }: HeaderProps) {
     <header className="sticky top-0 z-40 glass border-b border-ink-200/70">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 shadow-[0_4px_14px_rgba(116,68,232,0.35)] shrink-0">
-            <AudioLines size={20} className="text-white" strokeWidth={2.5} />
-            <span className="absolute inset-0 rounded-xl ring-1 ring-white/40" />
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-ink-200 shadow-soft shrink-0 overflow-hidden">
+            <img src="/favicon.png" alt="ScribeFlow" className="w-8 h-8 object-contain" />
           </div>
           <div className="min-w-0">
             <h1 className="text-base font-semibold text-ink-900 leading-tight tracking-tight">
